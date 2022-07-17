@@ -1,0 +1,8 @@
+.idea/
+.DS_Store
+app/.DS_Store
+app/__pycache__/
+app/views/__pycache__/
+t.py
+test.py
+.gitignore
