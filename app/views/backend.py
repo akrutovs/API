@@ -14,13 +14,13 @@ db_port = '5432'
 db_string = 'postgresql://{}:{}@{}:{}/{}'.format(db_user, db_pass, db_host, db_port, db_name)
 
 def init_logger(name):
-    logging.basicConfig(level='DEBUG')
+    logging.basicConfig(level='INFO')
     logger = logging.getLogger(name)
     FORMAT = '%(asctime)s:'
-    logger.setLevel("DEBUG")
+    logger.setLevel("INFO")
     sh = logging.StreamHandler()
     sh.setFormatter(logging.Formatter(FORMAT))
-    sh.setLevel('DEBUG')
+    sh.setLevel('INFO')
     logger.addHandler(sh)
     logger.debug('logger was create')
     return logger
@@ -29,7 +29,6 @@ logger = init_logger('app')
 logger.debug('ok')
 
 async def add_image_to_db(filename, path, date):
-
     conn = await asyncpg.connect(db_string)
     # Execute a statement to create a new table.
     await conn.execute('''
@@ -47,6 +46,7 @@ async def add_image_to_db(filename, path, date):
 
 
 async def get_image_from_database(id):
+    logger.info(f'get image with id {id}')
     conn = await asyncpg.connect(db_string)
     row = await conn.fetchrow(
         'SELECT * FROM images WHERE id = $1', int(id))
@@ -58,6 +58,7 @@ async def convert_to_jpg(path, image_name):
     rgb_im = im.convert('RGB')
     path = os.getcwd() + '/app/views/media/' + image_name + '.jpg'
     rgb_im.save(path)
+    logger.info(f'Image {image_name} was converted')
     return path
 
 
@@ -87,8 +88,9 @@ async def upload(request):
         new_path = await convert_to_jpg(path, unique_filename)
         if os.path.isfile(path):
             os.remove(path)
-            print("File has been deleted")
+            logger.debug(f'File {path} has been deleted')
     await add_image_to_db(filename=filename, path=new_path, date=datetime.utcnow())
+    logger.info(f'File {new_path} was add to db')
 
     return web.Response(text='{} sized of {} successfully stored'
                              ''.format(filename, size))
@@ -99,7 +101,7 @@ async def get_image(request):
     print(row)
     if row!=None:
         return web.Response(
-            text="Hello, {}".format(row))
+            text="Your file , {}".format(row))
     else:
         return web.Response(
-            text="Hello, {}".format("no data"))
+            text="Sorry, {}".format("no data"))
